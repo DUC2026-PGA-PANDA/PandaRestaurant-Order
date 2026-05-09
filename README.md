@@ -5,8 +5,8 @@ PandaRestaurant Order_Bot បង្កើត Telegram_Bot ដោយបញ្ច�
 
 ### 🔗 Project Navigation
 * **Live Bot:** [t.me/YourBotHandle](https://t.me/PandaRestaurantOrder_Bot)
-* **Project Management:** [Link to GitHub Project Board]
-* **Full Documentation:** [Link to GitHub Wiki]
+* **Project Management:** [[Link to GitHub Project Board](https://github.com/orgs/DUC2026-PGA-PANDA/projects/1)]
+* **Full Documentation:** [[Link to GitHub Wiki](https://github.com/DUC2026-PGA-PANDA/PandaRestaurant-Order/wiki)]
 
 ### 🛠 Technical Summary
 * **Language:** Node.js / Java / Python
