@@ -1,14 +1,39 @@
-# PandaRestaurant-Order
-PandaRestaurant Order_Bot បង្កើត Telegram_Bot ដោយបញ្ចូល៖  + QR Code E-Menu - ភ្ញៀវស្កេន QR Code នៅលើតុ ដើម្បីមើលម៉ឺនុយ និងកម្មង់ម្ហូបដោយខ្លួនឯង។ - ភ្ញៀវអាចកម្មង់ម្ហូបតាម Telegram_Botមុនមកដល់ហាង
+# DUC2026-[Company-Name] — Panda Restaurant (adapted)
 
-# [Virtual Company Name] - Telegram Bot Project
+Project reorganized to follow the `src/` layout suggested by the team. This repo originally contained a `backend/` package and a `frontend/` folder; the runtime code continues to live in `backend/` but the `src/` wrapper provides a clear entrypoint and package layout for future refactor.
 
-### 🔗 Project Navigation
-* **Live Bot:** (https://t.me/PandaRestaurantOrder_Bot)
-* **Project Management:** (https://github.com/orgs/DUC2026-PGA-PANDA/projects/1)
-* **Full Documentation:** (https://github.com/DUC2026-PGA-PANDA/PandaRestaurant-Order/wiki)
+Layout
+```
+DUC2026-[Company-Name]
+├── .github/
+├── src/
+│   ├── handlers/
+│   ├── models/
+│   ├── services/
+│   ├── utils/
+│   └── app.py
+├── backend/ (existing implementation)
+├── frontend/
+├── tests/
+├── .env.example
+├── .gitignore
+└── requirements.txt
+```
 
-### 🛠 Technical Summary
-* **Language:** Node.js / Java / Python
-* **Database:** PostgreSQL / Firebase
-* **Mockup Scenario:** [Insert Selected Scenario Name]
+Getting started
+
+1. Copy `.env.example` to `.env` and fill in values.
+2. Install dependencies:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+3. Run the app:
+
+```powershell
+python run.py
+```
+
+Notes
+- This is a minimal reorganization to provide `src/` wrapper files while keeping the existing code base functional. I can further move modules into `src/handlers`, `src/models`, etc., and update imports if you want a full conversion.
