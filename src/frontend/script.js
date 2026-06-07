@@ -1,4 +1,3 @@
-
 // Rest of the functions remain the same...
 // (loadCategories, loadItems, changeQty, addToCart, etc.)
 
@@ -180,6 +179,196 @@ function downloadTableQR(tableNumber, qrCode) {
     showToast(`QR Code for Table ${tableNumber} downloaded!`, '📱');
 }
 
+function showOrderingInstructions() {
+    // Placeholder for any ordering instruction banners
+}
+
+// Other functions referenced in index.html are expected to exist in this combined script.
+// Rest of the functions remain the same...
+// (loadCategories, loadItems, changeQty, addToCart, etc.)
+
+// Update checkout to include table number
+async function checkout() {
+    if (cart.length === 0) {
+        showToast('Cart is empty!', '❌');
+        return;
+    }
+    
+    const name = prompt('👤 Your name:');
+    if (!name) return;
+    const phone = prompt('📞 Phone number:');
+    if (!phone) return;
+    
+    // Determine order type based on table number
+    let orderType = 'takeaway';
+    let address = '';
+    
+    if (tableNumber === 11) {
+        orderType = 'online';
+        address = prompt('📍 Delivery address:');
+        if (!address) {
+            showToast('Address required for delivery!', '❌');
+            return;
+        }
+    } else if (tableNumber && tableNumber >= 1 && tableNumber <= 10) {
+        orderType = 'dine_in';
+    }
+    
+    const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    const orderData = {
+        customer_name: name,
+        customer_phone: phone,
+        items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity })),
+        total_amount: total,
+        order_type: orderType,
+        notes: address ? `Delivery address: ${address}` : ''
+    };
+    
+    if (tableNumber && tableNumber >= 1 && tableNumber <= 10) {
+        orderData.table_number = tableNumber;
+    }
+    
+    try {
+        const res = await fetch('/api/table-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        });
+        
+        const data = await res.json();
+        if (data.success) {
+            if (tableNumber === 11) {
+                showToast(`✅ Order confirmed! #${data.order_number}\nWe will deliver to: ${address}`, '🚚');
+            } else if (tableNumber) {
+                showToast(`✅ Order confirmed! #${data.order_number} - Table ${tableNumber}`, '🎉');
+            } else {
+                showToast(`✅ Order confirmed! #${data.order_number}`, '🎉');
+            }
+            cart = [];
+            localStorage.setItem(`cart_table_${tableNumber || 0}`, JSON.stringify(cart));
+            updateCartCount();
+            closeModal();
+        }
+    } catch (error) {
+        console.error('Error placing order:', error);
+        showToast('Error placing order. Please try again.', '❌');
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    updateTableBadge();
+    loadTablesGrid();
+    loadOnlineQR();
+    loadPreview();
+    loadCategories();
+    updateCartCount();
+    initMobileMenu();
+    initBackToTop();
+    showOrderingInstructions();
+    
+    window.downloadOnlineQR = downloadOnlineQR;
+    window.subscribeNewsletter = subscribeNewsletter;
+    
+    const cartFab = document.getElementById('cartFab');
+    if (cartFab) cartFab.onclick = showCart;
+    
+    if (tableNumber) {
+        console.log(`📱 Table ${tableNumber}${tableNumber === 11 ? ' (Online Order)' : ''} menu loaded`);
+    }
+});
+// Show toast notification
+function showToast(message, icon = '✅') {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerHTML = `<i class="fas ${icon === '✅' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+// frontend/script.js - Replace getTableNumber function
+function getTableNumber() {
+    // First check URL path (for /table-menu/1)
+    const path = window.location.pathname;
+    const pathMatch = path.match(/\/table-menu\/(\d+)/);
+    if (pathMatch) {
+        console.log('Table from path:', pathMatch[1]);
+        return parseInt(pathMatch[1]);
+    }
+    
+    // Then check query parameter (for /mobile-menu?table=1)
+    const urlParams = new URLSearchParams(window.location.search);
+    const tableParam = urlParams.get('table');
+    if (tableParam) {
+        console.log('Table from query:', tableParam);
+        return parseInt(tableParam);
+    }
+    
+    console.log('No table number found');
+    return null;
+}
+
+const tableNumber = getTableNumber();
+console.log('Final table number:', tableNumber);
+
+// Update cart storage key
+let cart = JSON.parse(localStorage.getItem(`cart_table_${tableNumber || 0}`) || '[]');
+// Update cart count badge
+function updateCartCount() {
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount) {
+        const total = cart.reduce((s, i) => s + i.quantity, 0);
+        cartCount.textContent = total;
+        cartCount.style.display = total > 0 ? 'flex' : 'none';
+    }
+}
+
+// Load tables grid with QR codes
+async function loadTablesGrid() {
+    const tablesGrid = document.getElementById('tablesGrid');
+    if (!tablesGrid) return;
+    
+    try {
+        const res = await fetch('/api/tables');
+        const tables = await res.json();
+        
+        // Filter only dine-in tables (1-10)
+        const dineInTables = tables.filter(t => t.table_number <= 10);
+        
+        tablesGrid.innerHTML = dineInTables.map(t => `
+            <div class="table-card">
+                <div class="table-qr">
+                    <img src="data:image/png;base64,${t.qr_code}" alt="Table ${t.table_number}">
+                </div>
+                <div class="table-number">Table ${t.table_number}</div>
+                <span class="table-status active"><i class="fas fa-circle"></i> Available</span>
+                <div class="table-actions">
+                    <button class="btn-download" onclick="downloadTableQR(${t.table_number}, '${t.qr_code}')">
+                        <i class="fas fa-download"></i> Download QR
+                    </button>
+                    <button class="btn-view" onclick="window.open('/table-menu/${t.table_number}', '_blank')">
+                        <i class="fas fa-eye"></i> View Menu
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading tables:', error);
+    }
+}
+
+// Download table QR code
+function downloadTableQR(tableNumber, qrCode) {
+    const link = document.createElement('a');
+    link.download = `table_${tableNumber}_qr.png`;
+    link.href = `data:image/png;base64,${qrCode}`;
+    link.click();
+    showToast(`QR Code for Table ${tableNumber} downloaded!`, '📱');
+}
+
+function downloadOnlineQR() {
+    // wrapper replaced by specific implementation elsewhere
+}
+
 // Load online ordering QR code
 async function loadOnlineQR() {
     const container = document.getElementById('onlineQrContainer');
@@ -200,7 +389,7 @@ async function loadOnlineQR() {
         `;
     } catch (error) {
         console.error('Error loading online QR:', error);
-        container.innerHTML = '<p class="error">Unable to load QR code. Please refresh the page.</p>';
+        container.innerHTML = '<p>Click button below to order</p>';
     }
 }
 

@@ -18,7 +18,10 @@ except Exception:
 import requests
 from .config import Config
 
-app = Flask(__name__, static_folder='../frontend', static_url_path='')
+# Serve frontend from src/frontend using absolute path
+CWD = os.path.dirname(__file__)
+FRONTEND_DIR = os.path.abspath(os.path.join(CWD, '..', 'frontend'))
+app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path='')
 CORS(app)
 
 # Simple in-memory pubsub for Server-Sent Events (SSE)
@@ -28,6 +31,7 @@ order_listeners = []
 DB_PATH = Config.DATABASE_PATH
 
 def init_db():
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
@@ -206,14 +210,10 @@ def init_db():
     
     conn.commit()
     conn.close()
-    print("✅ Database initialized!")
+    print("Database initialized!")
 
-# Use centralized DB initialization from backend.database (ensures subcategory column)
-try:
-    from . import database as _db
-    _db.init_database()
-except Exception as e:
-    print(f"DB init error: {e}")
+# Initialize local database during startup
+init_db()
 
 def db_query(query, params=(), fetch_one=False, fetch_all=False):
     conn = sqlite3.connect(DB_PATH)
@@ -243,28 +243,19 @@ def send_ready_notification(order_num, customer_name, table_number):
 
 # ==================== ROUTES ====================
 @app.route('/')
-def index():
-    return send_from_directory('../frontend', 'index.html')
-
 @app.route('/mobile-menu')
-def mobile_menu():
-    return send_from_directory('../frontend', 'menu.html')
-
 @app.route('/table-menu/<int:table_num>')
-def table_menu(table_num):
-    return send_from_directory('../frontend', 'menu.html')
-
 @app.route('/admin/login')
-def admin_login():
-    return send_from_directory('../frontend', 'admin_login.html')
-
 @app.route('/admin/dashboard')
-def admin_dashboard():
-    return send_from_directory('../frontend', 'admin.html')
+def index(*args, **kwargs):
+    return send_from_directory(FRONTEND_DIR, 'index.html')
 
 @app.route('/<path:path>')
 def static_files(path):
-    return send_from_directory('../frontend', path)
+    requested_file = os.path.join(FRONTEND_DIR, path)
+    if os.path.exists(requested_file) and not os.path.isdir(requested_file):
+        return send_from_directory(FRONTEND_DIR, path)
+    return send_from_directory(FRONTEND_DIR, 'index.html')
 
 # ==================== API ROUTES ====================
 @app.route('/api/categories')

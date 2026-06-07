@@ -4,12 +4,12 @@ This file wraps the existing `backend.app` implementation so the project
 follows the requested `src/` layout without requiring a full rewrite.
 """
 try:
-    from backend.app import app  # existing Flask app
+    from src.backend.app import app  # existing Flask app under src package
 except Exception:
     app = None
 
 try:
-    from backend.telegram_bot import start_bot_thread
+    from src.backend.telegram_bot import start_bot_thread
 except Exception:
     start_bot_thread = None
 
